@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# python train.py --optim=sgd --lr=lin_1_cos_1:0.01@0,0.1@5,0.001@40 --epochs=40 --model=res2net --pooling='ctdstats-128-1' --emb_dims=192 --weight_decay=1e-4 --speed_aug --ema_decay=0. --grad_norm --device=0,1 --port=12355 --max_len=360 --min_len=360
+# python train.py --optim=sgd --lr=lin_1_cos_1:0.01@0,0.1@5,0.001@40 --epochs=40 --model=resnet --batch_size=64 --filters='32-32-64-128-256' --pooling=stats --emb_dims=256 --weight_decay=1e-4 --speed_aug --ema_decay=0. --grad_norm --device=0,1,2,3 --port=12355 --max_len=360 --min_len=360
+#python train.py --optim=sgd --lr=lin_1_cos_1:0.01@0,0.1@5,0.001@40 --epochs=40 --former_cfg='(9,256,0.1,0,1e0,0,1e-12,0)|(4,63,2,0.1)|(4,0.1)|(2,15,0.1)|(16,16,8,5,0,0)|fusion' --speed_aug --ema_decay=0. --grad_norm --device=0,1 --port=12355  --max_len=360 --min_len=360
+python train.py --optim=sgd --lr=lin_1_cos_1:0.01@0,0.1@5,0.001@40 --epochs=40 --former_cfg='(12,256,0.15,0,1e0,0,1e-12,0)|(4,63,2,0.1)|(4,0.1)|(2,15,0.1)|(16,16,8,5,0,0)|fusion' --speed_aug --ema_decay=0. --grad_norm --device=0,1 --port=12355  --max_len=360 --min_len=360
