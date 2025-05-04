@@ -1,34 +1,42 @@
-# confusionformer
+# ConFusionformer
 This is an implementation of "ConFusionformer: Locality-enhanced Conformer Through Multi-resolution Attention
 Fusion for Speaker Verification".
 
 ## Requirements
-Python 3.10, Pytorch 2.30, Pandas, Scipy, Timm
+Python 3.10, Pytorch 2.3.1, Pandas, Scipy, Timm
 
 ## Running examples
-### Embdding training
+### Prepare training meta info and trails
 ```sh
-python train.py
+bash prep.sh
 ```
-This code will load VoxCeleb2-dev, MUSAN, and RIR from "../corpus", the default directory of corpora. To simplify data loading,
-meta information files containing path, utt_id, spk_id, No. of samples, duration, and speaker label are prepared and saved under
-the "meta" directory. Running this code will create a "model_ckpt" directory and the checkpoints will be saved in this folder.
+This script will create a meta folder and a trials folder under the current directory from the corpus data, which is default to "../corpus/".
+Please refer to utils/prep_vox_meta.py for the produced meta info files and utils/prep_vox_trails.py for the output trail files. These meta 
+info and trials will be created only once and then used for embedding training. 
 
-### Embdding extraction
+For your convenience, the produced meta and trials folders are available at https://drive.google.com/drive/folders/14OjUvTDaDoGG93OOX6HiaOqelO7y06WC?usp=sharing.
+
+### Embedding training
 ```sh
-python extract.py --ckpt_dir=model_ckpt/ckpt_20240503_0142 --ckpt_num=1
+bash train.sh
 ```
-This code will extract embeddings using the saved checkpoint and save the embeddings under "eval/xvectors".
+Running this code will create a "model_ckpt" directory, and the checkpoints will be saved in this folder.
+
+### Embedding extraction
+```sh
+bash extract.sh
+```
+This code will extract embeddings using the saved checkpoint and save the embeddings under "eval/xvectors/".
 
 ### Performance evaluation
 ```sh
-python -m be_run.be_voxceleb
+bash -m be_eval.sh
 ```
-Based on the extracted embeddings, Cosine scores will be produced under "eval/scores" and EER and minDCF will be computed.
+Cosine scores will be produced under "eval/scores/" and then EER and minDCF will be computed.
 
 ## References
 ```bibtex
-@article{Jin25-adv_temp_dkd,
+@article{Tu25-confusionformer,
   title   = {ConFusionformer: Locality-enhanced Conformer Through Multi-resolution Attention
 Fusion for Speaker Verification},
   author  = {Y. Tu and M. W. Mak and K. A. Lee and W. Lin},
