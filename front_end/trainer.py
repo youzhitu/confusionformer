@@ -44,8 +44,8 @@ class Trainer(object):
         self.epochs_trained = 0
         self.lr_scheduler = LRScheduler(self.lr)
         grad_norm_dir = f"grad_norm/{'_'.join(ckpt_dir.split('/')[-1].split('_')[1:])}" if grad_norm else None
-        self.train_metrics = Metrics(self.device, grad_norm_dir)
-        self.test_metrics = Metrics(self.device) if self.test_dataloader is not None else None
+        self.train_metrics = Metrics(grad_norm_dir)
+        self.test_metrics = Metrics() if self.test_dataloader is not None else None
         self.model_ema = None
 
         self.setup_train()
@@ -129,7 +129,7 @@ class Trainer(object):
         pred_loss = self.loss_fn(pred, label)
         reg_loss = self.weight_decay * sum([(para ** 2).sum() for para in self.model.parameters()])
 
-        return pred_loss + reg_loss, pred_loss.view(1,)
+        return pred_loss + reg_loss, torch.stack(pred_loss)
 
     def train_step(self, data, label):
         model_out = self.model(data, label)  # pred, pred_softmax = model_out
@@ -140,8 +140,9 @@ class Trainer(object):
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
         self.optimizer.step()
 
-        gradient_norm = self.compute_grad_norm() if self.grad_norm else None
-        self.train_metrics.update(loss, model_out[1], label, aux_loss, gradient_norm)
+        gradient_norm = tensor2numpy(self.compute_grad_norm()) if self.grad_norm else None
+        self.train_metrics.update(
+            loss.item(), tensor2numpy(model_out[1]), tensor2numpy(label), tensor2numpy(aux_loss), gradient_norm)
 
     def train_epoch(self):
         self.model.train()
@@ -336,11 +337,10 @@ class LRScheduler(object):
 
 
 class Metrics(object):
-    def __init__(self, device=None, grad_norm_dir=None):
-        self.device = device
+    def __init__(self, grad_norm_dir=None):
         self.grad_norm_dir = grad_norm_dir
 
-        self.loss, self.aux_loss = torch.tensor([0.], device=self.device), None
+        self.loss, self.aux_loss = 0., None
         self.n_batches, self.n_samples, self.n_correct = 0, 0, 0
         self.grad_norm = None
 
@@ -348,7 +348,7 @@ class Metrics(object):
             Path(f'{grad_norm_dir}').mkdir(parents=True, exist_ok=True)
 
     def reset(self):
-        self.loss, self.aux_loss = torch.tensor([0.], device=self.device), None
+        self.loss, self.aux_loss = 0., None
         self.n_batches, self.n_samples, self.n_correct = 0, 0, 0
         self.grad_norm = None
 
@@ -356,7 +356,7 @@ class Metrics(object):
         assert not torch.isnan(loss), f'loss is NaN after {self.n_batches} iterations, quit training!\n\n\n'
 
         self.loss += loss
-        self.n_correct += torch.eq(preds.argmax(1), labels).sum()
+        self.n_correct += np.equal(preds.argmax(1), labels).sum()
         self.n_batches += 1
         self.n_samples += labels.shape[0]
 
@@ -371,17 +371,23 @@ class Metrics(object):
         if self.n_batches == 0:
             raise ValueError
         else:
-            ave_loss, ave_acc = self.loss.item() / self.n_batches, self.n_correct / self.n_samples
+            ave_loss, ave_acc = self.loss / self.n_batches, self.n_correct / self.n_samples
 
             if self.aux_loss is None:
                 ave_aux_loss = (0.,)
             else:
-                ave_aux_loss = tuple([loss_.item() / self.n_batches for loss_ in self.aux_loss])
+                ave_aux_loss = tuple([loss_ / self.n_batches for loss_ in self.aux_loss])
 
             if self.grad_norm is not None:
-                np.save(f'{self.grad_norm_dir}/{epoch}.npy', self.grad_norm.cpu().numpy() / self.n_batches)
+                np.save(f'{self.grad_norm_dir}/{epoch}.npy', self.grad_norm / self.n_batches)
 
         return ave_loss, ave_acc, ave_aux_loss
+
+
+def tensor2numpy(tensor):
+    if tensor.dim() > 0:
+        return tensor.detach().cpu().numpy()
+    return tensor.item()
 
 
 def load_parameters(model, ckpt):
