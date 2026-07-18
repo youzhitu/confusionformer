@@ -23,7 +23,7 @@ parser.add_argument('--port', default='12355', help='port for ddp training')
 parser.add_argument('--n_workers', type=int, default=4, help='No. of cpu threads per process')
 parser.add_argument('--model', default='confusionformer',
                     help='tdnn, resnet, res2net, conformer, confusionformer, transformer')
-parser.add_argument('--batch_size', type=int, default=128, help='local mini-batch size')
+parser.add_argument('--batch_size', type=int, default=64, help='local mini-batch size')
 parser.add_argument('--epochs', type=int, default=30, help='No. of training epochs')
 parser.add_argument('--train_src', default='vox2', help='vox2, cnceleb, sre21')
 parser.add_argument('--save_ckpts', type=int, default=5, help='No. of ckpts to be saved')
