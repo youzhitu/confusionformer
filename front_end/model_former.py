@@ -156,20 +156,28 @@ class ConvNextStem(nn.Module):
         super().__init__()
 
         chnls = [8, 32, 128]
+        kernels = [3, 3, 3]
         strides = [(1, 1), (2, 2), (2, 1)]
-        self.sub_conv1 = conv2d_unit(1, chnls[0], 3, stride=strides[0], padding=1, norm=None, act=nn.GELU())
-        self.sub_conv2 = conv2d_unit(chnls[0], chnls[1], 3, stride=strides[1], padding=1, norm=None, act=nn.GELU())
-        self.sub_conv3 = conv2d_unit(chnls[1], chnls[2], 3, stride=strides[2], padding=1, norm=None, act=nn.GELU())
+        pads = [(1, 1), (1, 1), (1, 1)]
+
+        self.sub_conv1 = conv2d_unit(
+            1, chnls[0], kernels[0], stride=strides[0], padding=pads[0], norm=None, act=nn.GELU())
+        self.sub_conv2 = conv2d_unit(
+            chnls[0], chnls[1], kernels[1], stride=strides[1], padding=pads[1], norm=None, act=nn.GELU())
+        self.sub_conv3 = conv2d_unit(
+            chnls[1], chnls[2], kernels[2], stride=strides[2], padding=pads[2], norm=None, act=nn.GELU())
 
         if conv_next:
             self.sub_next_conv = ConvNextLayer(chnls[2], expansion=4, rmsn=rmsn, ln_eps=ln_eps)
 
-        freq_strides = [stride[0] for stride in strides]
+        freq_kers = [kernel[0] if isinstance(kernel, tuple) else kernel for kernel in kernels]
+        freq_strides = [stride[0] if isinstance(stride, tuple) else stride for stride in strides]
+        freq_pads = [pad[0] if isinstance(pad, tuple) else pad for pad in pads]
         freq_dim = input_dim
 
-        for freq_stride in freq_strides:
-            freq_dim = (freq_dim - 1) // freq_stride + 1
-
+        for freq_ker, freq_stride, freq_pad in zip(freq_kers, freq_strides, freq_pads):
+            freq_dim = (freq_dim + 2 * freq_pad - (freq_ker - 1) - 1) // freq_stride + 1
+            
         self.sub_proj = nn.Linear(freq_dim * chnls[-1], d_model)
         self.ln = LayerNorm(d_model, rmsn=rmsn, eps=ln_eps)
         self.dropout = nn.Dropout(p=stem_dropout)
