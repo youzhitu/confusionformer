@@ -10,7 +10,7 @@ Python 3.10, Pytorch 2.3.1, Pandas, Scipy, Timm
 ```sh
 bash prep.sh
 ```
-This script will create a "meta" folder and a "trials" folder under the current directory from the corpus data, which is default to "../corpus/".
+This script will create a "meta" folder and a "trials" folder under the current directory from the corpus data, which defaults to "../corpus/".
 Please refer to utils/prep_vox_meta.py for the produced meta info files and utils/prep_vox_trails.py for the output trail files. These meta 
 info and trials will be created only once and then used for embedding training. 
 
@@ -20,7 +20,7 @@ For your convenience, the produced meta and trials folders are available at http
 ```sh
 bash train.sh
 ```
-Running this code will create a "model_ckpt" directory, and the checkpoints will be saved in this folder.
+Running this code will create a "model_ckpt" directory, and the checkpoints will be saved in this folder. We later found that a (global) mini-batch size of 128 produces a better EER.
 
 ### Embedding extraction
 ```sh
