@@ -129,7 +129,7 @@ class Trainer(object):
         pred_loss = self.loss_fn(pred, label)
         reg_loss = self.weight_decay * sum([(para ** 2).sum() for para in self.model.parameters()])
 
-        return pred_loss + reg_loss, torch.stack(pred_loss)
+        return pred_loss + reg_loss, torch.stack([pred_loss])
 
     def train_step(self, data, label):
         model_out = self.model(data, label)  # pred, pred_softmax = model_out
@@ -353,7 +353,7 @@ class Metrics(object):
         self.grad_norm = None
 
     def update(self, loss, preds, labels, aux_loss=None, grad_norm=None):
-        assert not torch.isnan(loss), f'loss is NaN after {self.n_batches} iterations, quit training!\n\n\n'
+        assert not math.isnan(loss), f'loss is NaN after {self.n_batches} iterations, quit training!\n\n\n'
 
         self.loss += loss
         self.n_correct += np.equal(preds.argmax(1), labels).sum()
